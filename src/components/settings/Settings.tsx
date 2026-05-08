@@ -2,13 +2,12 @@ import React from "react";
 import useSettings, { ISettings } from "hooks/useSettings";
 import useLanguages from "hooks/useLanguages";
 import { IModal } from "hooks/useModal";
-import Select from "components/form/Select";
-import Field from "components/form/Field";
 import FieldChart from "./FieldChart";
-import modalStyles from "hooks/useModal/useModal.module.scss";
-import styles from "./Settings.module.scss";
-import Button from "components/form/Button";
+import { Button } from "components/ui/button";
 import useHelpers from "hooks/useHelpers";
+import { DialogContent, DialogHeader, DialogTitle } from "components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "components/ui/select";
+import { Label } from "components/ui/label";
 
 const Settings = ({ close }: Props) => {
   const { __ } = useLanguages();
@@ -41,37 +40,87 @@ const Settings = ({ close }: Props) => {
   const field = { form, setForm };
 
   return (
-    <form name="settings" onSubmit={onSubmit} className={styles.settings}>
-      <h1>{__("Settings")}</h1>
-      <Field name="units" label="Units">
-        <Select<typeof form> name="units" options={units} {...field} />
-      </Field>
-      <Field name="reports_initial" label="Initial report">
-        <Select<typeof form>
-          name="reports_initial"
-          options={[{ value: "top", label: __("Top") }, ...initials]}
-          {...field}
-        />
-      </Field>
-      <Field name="chart_initial" label="Initial chart">
-        <Select<typeof form>
-          name="chart_initial"
-          options={initials}
-          {...field}
-        />
-      </Field>
-      <FieldChart label="Minutes" type="fiveminute" {...field} />
-      <FieldChart label="Hours" type="hour" {...field} />
-      <FieldChart label="Days" type="day" {...field} />
-      <FieldChart label="Months" type="month" {...field} />
-      <FieldChart label="Years" type="year" {...field} />
-      <div className={modalStyles.actions}>
-        <Button type="button" onClick={() => close()}>
-          {__("Cancel")}
-        </Button>
-        <Button type="submit">{__("Save")}</Button>
-      </div>
-    </form>
+    <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>{__("Settings")}</DialogTitle>
+      </DialogHeader>
+      <form name="settings" onSubmit={onSubmit} className="flex flex-col gap-6 py-4">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="flex flex-col gap-2">
+            <Label>Units</Label>
+            <Select value={form.units} onValueChange={(val: any) => setForm(p => ({ ...p, units: val }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {units.map(u => <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Theme</Label>
+            <Select value={form.theme || "dark"} onValueChange={(val: any) => {
+                setForm(p => ({ ...p, theme: val }));
+                if (val === "dark") document.documentElement.classList.add("dark");
+                else document.documentElement.classList.remove("dark");
+            }}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="light">Light</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Initial report</Label>
+            <Select value={form.reports_initial} onValueChange={(val: any) => setForm(p => ({ ...p, reports_initial: val }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="top">{__("Top")}</SelectItem>
+                {initials.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Label>Initial chart</Label>
+            <Select value={form.chart_initial} onValueChange={(val: any) => setForm(p => ({ ...p, chart_initial: val }))}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {initials.map(i => <SelectItem key={i.value} value={i.value}>{i.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <div className="mt-4 pt-4 border-t">
+          <h3 className="font-semibold mb-4 text-lg">Charts Config</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FieldChart label="Minutes" type="fiveminute" {...field} />
+            <FieldChart label="Hours" type="hour" {...field} />
+            <FieldChart label="Days" type="day" {...field} />
+            <FieldChart label="Months" type="month" {...field} />
+            <FieldChart label="Years" type="year" {...field} />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-4">
+          <Button variant="outline" type="button" onClick={() => close()}>
+            {__("Cancel")}
+          </Button>
+          <Button type="submit">{__("Save")}</Button>
+        </div>
+      </form>
+    </DialogContent>
   );
 };
 

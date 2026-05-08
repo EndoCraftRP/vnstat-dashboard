@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import styles from "./useModal.module.scss";
+import { Dialog, DialogOverlay, DialogPortal } from "components/ui/dialog";
 
 const useModal = (
   children: React.FunctionComponent<IModal.Props>,
@@ -9,8 +9,7 @@ const useModal = (
     close: () => {},
   }
 ): IModal.Return => {
-  const [Modal, setModal] = React.useState<React.ReactNode>(null);
-  const ref = React.useRef<HTMLDivElement>(null);
+  const [open, setOpen] = React.useState(false);
 
   options = {
     name: "name",
@@ -20,38 +19,24 @@ const useModal = (
   props.close = closeModal;
 
   function toggle(): void {
-    if (Modal) closeModal();
-    else openModal();
-  }
-
-  function openModal(): void {
-    setModal(
-      ReactDOM.createPortal(
-        <div ref={ref} className={styles.modal + " modal-" + options.name}>
-          <div className={styles.overlay} onClick={() => closeModal()}></div>
-          <div className={styles.window}>
-            {React.createElement(children, props)}
-          </div>
-        </div>,
-        document.body
-      )
-    );
-    document.addEventListener("keydown", escape, false);
+    setOpen(!open);
   }
 
   function closeModal(): void {
-    ref.current?.classList.add("close");
-    setTimeout(() => {
-      setModal(null);
-    }, 1000);
-    document.removeEventListener("keydown", escape, false);
+    setOpen(false);
   }
 
-  function escape(e: KeyboardEvent): void {
-    if (e.key === "Escape") closeModal();
-  }
+  const ModalComponent = open ? ReactDOM.createPortal(
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogPortal>
+        <DialogOverlay className="z-50" />
+        {React.createElement(children, props)}
+      </DialogPortal>
+    </Dialog>,
+    document.body
+  ) : null;
 
-  return [Modal, toggle];
+  return [ModalComponent, toggle];
 };
 
 export default useModal;

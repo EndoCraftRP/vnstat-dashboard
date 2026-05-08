@@ -5,59 +5,65 @@ import useReports from "hooks/useReports";
 import useSettings from "hooks/useSettings";
 import About from "../about/About";
 import Settings from "../settings/Settings";
-import Widget from "../widget/Widget";
-import MenuInterface from "./MenuInterface";
-import styles from "./Menu.module.scss";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "components/ui/select";
+import { Button } from "components/ui/button";
 
 const Menu = () => {
   const { __ } = useLanguages();
-  const { reports } = useReports();
-  const { ifaces } = useSettings();
-  const [active, setActive] = React.useState(false);
+  const { reports, changeReports } = useReports();
+  const { ifaces, settings, setSettings } = useSettings();
 
   const [ModalAbout, openAbout] = useModal(About, { name: "about" });
   const [ModalSettings, openSettings] = useModal(Settings, {
     name: "settings",
   });
 
-  let iface: string[] = [reports.getInterface()];
-  if (iface[0].indexOf("+")) iface = iface[0].split("+");
+  if (!ifaces || !reports) return null;
 
-  if (!ifaces) return null;
-
-  const current = ifaces.filter((el) => iface.includes(el.name));
-  const title = current[0].alias == "" ? current[0].name : current[0].alias;
+  const currentIface = reports.getInterface();
 
   return (
-    <>
-      <Widget className={styles.menu}>
-        <div
-          className={[styles.box, active ? styles.active : null].join(" ")}
-          onMouseEnter={() => setActive(true)}
-          onMouseLeave={() => setActive(false)}
-        >
-          <div className={styles.title} onClick={() => setActive(!active)}>
-            {title}
-            {current.length > 1 && <span>+</span>}
-          </div>
-          <ul className={styles.list}>
-            {ifaces.length > 1 &&
-              ifaces.map((item, index) => (
-                <MenuInterface key={index} iface={iface} item={item} />
-              ))}
-            <li className="divider"></li>
-            <li>
-              <button onClick={() => openSettings()}>{__("Settings")}</button>
-            </li>
-            <li>
-              <button onClick={() => openAbout()}>{__("About")}</button>
-            </li>
-          </ul>
-        </div>
-      </Widget>
+    <div className="flex items-center gap-4">
+      <Select value={currentIface} onValueChange={changeReports}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select Interface" />
+        </SelectTrigger>
+        <SelectContent>
+          {ifaces.map((item) => (
+            <SelectItem key={item.name} value={item.name}>
+              {item.alias || item.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={settings.units} onValueChange={(val: any) => setSettings(prev => ({ ...prev, units: val }))}>
+        <SelectTrigger className="w-[100px]">
+          <SelectValue placeholder="Units" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="IEC">IEC (MiB)</SelectItem>
+          <SelectItem value="JEDEC">JEDEC (MB)</SelectItem>
+          <SelectItem value="SI">SI (MB)</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Button variant="outline" onClick={() => openSettings()}>
+        {__("Settings")}
+      </Button>
+      <Button variant="ghost" onClick={() => openAbout()}>
+        {__("About")}
+      </Button>
+
       {ModalAbout}
       {ModalSettings}
-    </>
+    </div>
   );
 };
 

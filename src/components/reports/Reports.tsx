@@ -6,7 +6,7 @@ import { ReportsContext } from "./ReportsContext";
 import Widget from "../widget/Widget";
 import Cards from "./Cards";
 import { IvnStat } from "services/vnstat.type";
-import styles from "./Reports.module.scss";
+import { Tabs, TabsList, TabsTrigger } from "components/ui/tabs";
 
 const Reports = () => {
   const { __ } = useLanguages();
@@ -27,20 +27,18 @@ const Reports = () => {
   ];
 
   return (
-    <Widget className={styles.reports}>
-      <div className={styles.caption}>
-        <h2>{__("Reports")}</h2>
-        <div className={styles.menu}>
-          {menu.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => setTab(item.type as IvnStat.TrafficKeys)}
-              className={item.type === type ? "active" : undefined}
-            >
-              {item.title}
-            </button>
-          ))}
-        </div>
+    <Widget>
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+        <h2 className="text-xl font-medium mb-4 sm:mb-0">{__("Reports")}</h2>
+        <Tabs value={type} onValueChange={(val: any) => setTab(val)}>
+          <TabsList>
+            {menu.map((item) => (
+              <TabsTrigger key={item.type} value={item.type}>
+                {item.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
       <Cards type={type} traffic={traffic} />
     </Widget>

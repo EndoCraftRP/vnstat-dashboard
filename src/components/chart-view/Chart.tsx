@@ -1,97 +1,55 @@
 import React from "react";
-import {
-  bb,
-  bar,
-  areaSpline,
-  zoom,
-  ChartOptions,
-  ChartTypes,
-  Chart as bbChart,
-} from "billboard.js";
 import { DateTime } from "luxon";
-import useSettings from "hooks/useSettings";
 import { IvnStat } from "services/vnstat.type";
-import "billboard.js/dist/billboard.css";
-import "./billboard.scss";
 import useHelpers from "hooks/useHelpers";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+  Line,
+  LineChart
+} from "recharts";
+import useSettings from "hooks/useSettings";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "components/ui/tabs";
 
 const Chart = ({ type, traffic }: Props) => {
   const { settings } = useSettings();
   const { formatTraffic } = useHelpers();
-  const ref = React.useRef<HTMLDivElement>(null);
-  const instance = React.useRef<bbChart>();
 
-  const defaults: ChartOptions = {
-    data: {
-      x: "x",
-      columns: [],
-      // groups: [["RX", "TX"]], // This makes log scales oversize the chart!
-    },
-    zoom: {
-      enabled: zoom(),
-    },
-    clipPath: false,
-    spline: {
-      interpolation: {
-        type: "monotone-x",
-      },
-    },
-    color: {
-      pattern: ["var(--rx)", "var(--tx)"],
-    },
-    area: {
-      linearGradient: true,
-    },
-    bar: {
-      // linearGradient: true,
-      padding: 3,
-    },
-    legend: {
-      position: "inset",
-    },
-    point: {
-      show: false,
-    },
-    axis: {
-      y: {
-        show: false,
-      },
-      x: {
-        type: "timeseries",
-        height: 20,
-        tick: {
-          format: formatTick,
-        },
-        padding: {
-          right: 0,
-          left: 0,
-        },
-      },
-    },
-    tooltip: {
-      format: {
-        title: formatTooltipTitle,
-        value: formatTraffic,
-      },
-    },
-    grid: {
-      x: {
-        lines: [],
-      },
-      y: {
-        show: false,
-        // lines: [
-        // 	{ value: Math.pow(1024, 2), text: 'MB', position: 'start' },
-        // 	{ value: Math.pow(1024, 3), text: 'GB', position: 'start' },
-        // ]
-      },
-    },
+  const data = React.useMemo(() => {
+    return traffic.map((item) => ({
+      ...item,
+      dateObj: DateTime.fromObject({ ...item.date, ...item.time }).toJSDate(),
+      rateMbit: item.rate ? item.rate / 1000000 : 0 // Mbit/s
+    }));
+  }, [traffic]);
+
+  const formatXAxis = (tickItem: Date) => {
+    const date = DateTime.fromJSDate(tickItem);
+    switch (type) {
+      case "fiveminute":
+      case "hour":
+        return date.toLocaleString(DateTime.TIME_SIMPLE);
+      case "day":
+        return date.toFormat("d");
+      case "month":
+        return date.toFormat("MMM");
+      case "year":
+        return date.toFormat("yyyy");
+      default:
+        return "";
+    }
   };
 
-  // Format Tooltip titles
-
-  function formatTooltipTitle(value: Date): string {
-    const date = DateTime.fromJSDate(value);
+  const formatTooltipDate = (tickItem: Date) => {
+    const date = DateTime.fromJSDate(tickItem);
     switch (type) {
       case "fiveminute":
       case "hour":
@@ -99,154 +57,98 @@ const Chart = ({ type, traffic }: Props) => {
       case "day":
         return date.toLocaleString(DateTime.DATE_SHORT);
       case "month":
-        return date.monthLong + " " + date.year;
+        return date.toFormat("MMMM yyyy");
       case "year":
-        return date.year.toString();
+        return date.toFormat("yyyy");
       default:
         return "";
     }
-  }
+  };
 
-  // Format Ticks
-
-  function formatTick(value: Date): string | number {
-    const date = DateTime.fromJSDate(value);
+  const chartData = React.useMemo(() => {
+    let limit = data.length;
     switch (type) {
-      case "fiveminute":
-      case "hour":
-        return date.toLocaleString(DateTime.TIME_SIMPLE);
-      case "day":
-        return date.day;
-      case "month":
-        return date.monthLong ?? "";
-      case "year":
-        return date.year;
-      default:
-        return "";
+      case "fiveminute": limit = 288; break; // 24h
+      case "hour": limit = 48; break;
+      case "day": limit = 30; break;
+      case "month": limit = 12; break;
+      case "year": limit = 10; break;
     }
-  }
+    return data.slice(Math.max(data.length - limit, 0));
+  }, [data, type]);
 
-  // Create addicional grid lines
+  const name = `chart_${type}_type` as keyof typeof settings;
+  const isBar = settings[name] === "bar";
 
-  function getGridLines(type: string, data: Columns[0]): GridLines[] {
-    let lines: GridLines[] = [];
-    data.forEach((value) => {
-      if (typeof value === "string") return;
-      let datetime = DateTime.fromJSDate(value);
-      let line = false;
-      if (type === "day") line = datetime.hour === 0 && datetime.minute === 0;
-      else if (type === "month") line = datetime.day === 1;
-      if (line) lines.push({ value: value });
-    });
-    return lines;
-  }
-
-  // Get columns
-
-  function getColumns(): Columns {
-    let columns: Columns = [["x"], ["RX"], ["TX"]];
-    traffic.forEach((item) => {
-      columns[0].push(
-        DateTime.fromObject({ ...item.date, ...item.time }).toJSDate()
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-popover text-popover-foreground border p-3 rounded shadow-md">
+          <p className="mb-2 font-semibold text-sm">{formatTooltipDate(label)}</p>
+          {payload.map((p: any, idx: number) => (
+            <p key={idx} style={{ color: p.color }} className="text-sm">
+              <span className="font-medium">{p.name}:</span> {p.name === "Rate" ? p.value.toFixed(2) + " Mbit/s" : formatTraffic(p.value)}
+            </p>
+          ))}
+        </div>
       );
-      columns[1].push(item.rx);
-      columns[2].push(item.tx);
-    });
-    return columns;
-  }
-
-  // Mount the correct zoom range
-
-  function getZoomRange(columns: Columns, start: number): ZoomRange {
-    const x = columns[0];
-    const min = x.length - 1;
-    if (start > min) start = min;
-    return [x.at(-start) as Date, x.at(-1) as Date];
-  }
-
-  // Get selected settings
-
-  function getChartType(): ChartTypes {
-    const name = `chart_${type}_type` as keyof typeof settings;
-    if (settings[name] === "bar") return bar();
-    return areaSpline();
-  }
-
-  function getChartLog(): object {
-    const name = `chart_${type}_log` as keyof typeof settings;
-    if (settings[name]) {
-      let logMin = type === "day" ? Math.pow(1000, 2) : 1000; // MB : KB
-      return {
-        show: false,
-        type: "log",
-        min: logMin,
-        max: Math.pow(1000, 4), // TB
-      };
     }
-    return { show: false };
-  }
+    return null;
+  };
 
-  // Define chart options according to report type and settings
+  return (
+    <Tabs defaultValue="traffic" className="w-full">
+      <div className="flex justify-end mb-4">
+        <TabsList>
+          <TabsTrigger value="traffic">Traffic Data</TabsTrigger>
+          <TabsTrigger value="rate">Mbit/s Rate</TabsTrigger>
+        </TabsList>
+      </div>
 
-  let options: ChartOptions = { ...defaults };
-  let zoomRange: ZoomRange;
-  const columns: Columns = getColumns();
+      <TabsContent value="traffic">
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            {isBar ? (
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                <XAxis dataKey="dateObj" tickFormatter={formatXAxis} minTickGap={30} tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(val) => formatTraffic(val)} tick={{ fontSize: 12 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Bar dataKey="rx" name="RX" fill="#10b981" />
+                <Bar dataKey="tx" name="TX" fill="#6366f1" />
+              </BarChart>
+            ) : (
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                <XAxis dataKey="dateObj" tickFormatter={formatXAxis} minTickGap={30} tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(val) => formatTraffic(val)} tick={{ fontSize: 12 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
+                <Area type="monotone" dataKey="rx" name="RX" stroke="#10b981" fill="#10b981" fillOpacity={0.3} />
+                <Area type="monotone" dataKey="tx" name="TX" stroke="#6366f1" fill="#6366f1" fillOpacity={0.3} />
+              </AreaChart>
+            )}
+          </ResponsiveContainer>
+        </div>
+      </TabsContent>
 
-  options.data!.type = getChartType();
-  options.axis!.y = getChartLog();
-
-  switch (type) {
-    case "fiveminute":
-      options.grid!.x!.lines = getGridLines("day", columns[0]);
-      if (columns[0].length > 100) options.axis!.x!.tick!.count = 100;
-      zoomRange = getZoomRange(columns, 288); // 24h
-      break;
-    case "hour":
-      options.grid!.x!.lines = getGridLines("day", columns[0]);
-      zoomRange = getZoomRange(columns, 48); // 48h
-      break;
-    case "day":
-      // options.grid.x.lines = getGridLines("month", columns[0]);
-      zoomRange = getZoomRange(columns, 30);
-      break;
-    case "month":
-      zoomRange = getZoomRange(columns, 12);
-      break;
-    case "year":
-      zoomRange = getZoomRange(columns, 10);
-      break;
-    default:
-  }
-
-  // FIXME: Billboard zoom doesn't work well with bars
-
-  let zoomEnable = true;
-  let name = `chart_${type}_type` as keyof typeof settings;
-  if (settings[name] === "bar") {
-    zoomEnable = false;
-    options.axis!.x!.padding = {};
-  }
-
-  // Initiate
-
-  React.useEffect(() => {
-    if (!instance.current) {
-      instance.current = bb.generate({
-        ...options,
-        bindto: ref.current,
-      });
-      instance.current.load({ columns: columns });
-      if (zoomEnable && zoomRange) instance.current.zoom(zoomRange);
-    }
-    return () => {
-      if (instance.current) {
-        instance.current.destroy();
-        instance.current = undefined;
-      }
-    };
-  });
-
-  return <div ref={ref} />;
+      <TabsContent value="rate">
+        <div className="h-[400px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+              <XAxis dataKey="dateObj" tickFormatter={formatXAxis} minTickGap={30} tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={(val) => val.toFixed(1) + " Mb/s"} tick={{ fontSize: 12 }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Legend />
+              <Line type="monotone" dataKey="rateMbit" name="Rate" stroke="#f59e0b" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </TabsContent>
+    </Tabs>
+  );
 };
 
 export default Chart;
@@ -255,11 +157,3 @@ type Props = {
   type: IvnStat.TrafficKeys;
   traffic: IvnStat.Traffic[];
 };
-
-type GridLines = {
-  value: Date;
-};
-
-type Columns = [[string | Date], [string | number], [string | number]];
-
-type ZoomRange = [string | number | Date, string | number | Date];

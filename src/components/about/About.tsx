@@ -1,56 +1,32 @@
-import React from "react";
-import useLanguages from "hooks/useLanguages";
-import styles from "./About.module.scss";
+import { IModal } from "hooks/useModal";
+import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from "components/ui/dialog";
 
-const About = () => {
-  const { __ } = useLanguages();
-  const [update, setUpdate] = React.useState();
-
-  // Check for updates
-
-  React.useEffect(() => {
-    fetch(
-      "https://raw.githubusercontent.com/edirpedro/vnstat-dashboard/main/package.json"
-    )
-      .then((response) => response.json())
-      .then((json) => {
-        if (json.length && json.version !== process.env.REACT_APP_VERSION)
-          setUpdate(json.version);
-      })
-      .catch(console.error);
-  });
-
+const About = ({ close }: Props) => {
   return (
-    <div className={styles.about}>
-      <h1>vnStat Dashboard</h1>
-      <dl>
-        <dt>{__("Version")}:</dt>
-        <dd>
-          {process.env.REACT_APP_VERSION}
-          {update && (
-            <>
-              <span> &mdash; {__("available")} </span>
-              <a href="https://github.com/edirpedro/vnstat-dashboard/releases">
-                {update}
-              </a>
-            </>
-          )}
-        </dd>
-        <dt>{__("Author")}:</dt>
-        <dd>Edir Pedro</dd>
-        <dt>Github:</dt>
-        <dd>
-          <a href="https://github.com/edirpedro/vnstat-dashboard">
-            https://github.com/edirpedro/vnstat-dashboard
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>vnStat Dashboard</DialogTitle>
+        <DialogDescription>
+          v0.2.2 - Created by Edir Pedro
+        </DialogDescription>
+      </DialogHeader>
+      <div className="py-4 space-y-4">
+        <p className="text-sm">
+          A modern, beautiful interface for vnStat data. This project is a visualization tool that processes
+          vnStat JSON output to present easy-to-understand metrics and charts.
+        </p>
+        <p className="text-sm font-medium">
+          <a href="https://github.com/edirpedro/vnstat-dashboard" target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
+            GitHub Repository
           </a>
-        </dd>
-        <dt>vnStat:</dt>
-        <dd>
-          <a href="https://humdi.net/vnstat/">https://humdi.net/vnstat/</a>
-        </dd>
-      </dl>
-    </div>
+        </p>
+      </div>
+    </DialogContent>
   );
 };
 
 export default About;
+
+type Props = {
+  close: IModal.Props["close"];
+};
