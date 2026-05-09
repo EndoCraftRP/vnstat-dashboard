@@ -24,7 +24,7 @@ import { Switch } from "components/ui/switch";
 import { Label } from "components/ui/label";
 
 
-const Chart = ({ type, traffic }: Props) => {
+const Chart = ({ type, traffic, chartMode, setChartMode }: Props) => {
   const { settings } = useSettings();
   const { formatTraffic } = useHelpers();
   const [historyOption, setHistoryOption] = React.useState<string>("default");
@@ -193,7 +193,7 @@ const Chart = ({ type, traffic }: Props) => {
   };
 
   return (
-    <Tabs defaultValue="traffic" className="w-full">
+    <Tabs value={chartMode} onValueChange={setChartMode} className="w-full">
       <div className="flex justify-between items-center mb-4">
         <div className="w-[180px]">
           <Select value={historyOption} onValueChange={setHistoryOption}>
@@ -294,4 +294,6 @@ export default Chart;
 type Props = {
   type: IvnStat.TrafficKeys;
   traffic: IvnStat.Traffic[];
+  chartMode: string;
+  setChartMode: (val: string) => void;
 };

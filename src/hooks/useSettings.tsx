@@ -50,6 +50,11 @@ export const SettingsProvider = ({ children }: Provider) => {
 
           if (iface !== settings.interface)
             setSettings((prev) => ({ ...prev, interface: iface }));
+
+          // Apply theme on load
+          const theme = settings.theme || "dark";
+          if (theme === "dark") document.documentElement.classList.add("dark");
+          else document.documentElement.classList.remove("dark");
           setIfaces(json.interfaces);
           setReady(true);
         })
