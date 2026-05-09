@@ -18,10 +18,64 @@ import {
 } from "recharts";
 import useSettings from "hooks/useSettings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "components/ui/select";
+
 
 const Chart = ({ type, traffic }: Props) => {
   const { settings } = useSettings();
   const { formatTraffic } = useHelpers();
+  const [historyOption, setHistoryOption] = React.useState<string>("default");
+
+  React.useEffect(() => {
+    setHistoryOption("default");
+  }, [type]);
+
+  const getHistoryOptions = () => {
+    switch (type) {
+      case "fiveminute":
+        return [
+          { value: "default", label: "Last 24h" },
+          { value: "6h", label: "Last 6h" },
+          { value: "12h", label: "Last 12h" },
+          { value: "48h", label: "Last 48h" },
+          { value: "72h", label: "Last 72h" },
+          { value: "all", label: "All" },
+        ];
+      case "hour":
+        return [
+          { value: "default", label: "Last 48h" },
+          { value: "24h", label: "Last 24h" },
+          { value: "72h", label: "Last 72h" },
+          { value: "7d", label: "Last 7 Days" },
+          { value: "14d", label: "Last 14 Days" },
+          { value: "30d", label: "Last 30 Days" },
+          { value: "all", label: "All" },
+        ];
+      case "day":
+        return [
+          { value: "default", label: "Last 30 Days" },
+          { value: "7d", label: "Last 7 Days" },
+          { value: "14d", label: "Last 14 Days" },
+          { value: "90d", label: "Last 90 Days" },
+          { value: "all", label: "All" },
+        ];
+      case "month":
+        return [
+          { value: "default", label: "Last 12 Months" },
+          { value: "6m", label: "Last 6 Months" },
+          { value: "24m", label: "Last 24 Months" },
+          { value: "all", label: "All" },
+        ];
+      case "year":
+        return [
+          { value: "default", label: "Last 10 Years" },
+          { value: "5y", label: "Last 5 Years" },
+          { value: "all", label: "All" },
+        ];
+      default:
+        return [];
+    }
+  };
 
   const data = React.useMemo(() => {
     return traffic.map((item) => ({
@@ -67,15 +121,46 @@ const Chart = ({ type, traffic }: Props) => {
 
   const chartData = React.useMemo(() => {
     let limit = data.length;
-    switch (type) {
-      case "fiveminute": limit = 288; break; // 24h
-      case "hour": limit = 48; break;
-      case "day": limit = 30; break;
-      case "month": limit = 12; break;
-      case "year": limit = 10; break;
+
+    if (historyOption === "all") {
+      limit = data.length;
+    } else {
+      switch (type) {
+        case "fiveminute":
+          if (historyOption === "6h") limit = 72;
+          else if (historyOption === "12h") limit = 144;
+          else if (historyOption === "48h") limit = 576;
+          else if (historyOption === "72h") limit = 864;
+          else limit = 288; // 24h default
+          break;
+        case "hour":
+          if (historyOption === "24h") limit = 24;
+          else if (historyOption === "72h") limit = 72;
+          else if (historyOption === "7d") limit = 168;
+          else if (historyOption === "14d") limit = 336;
+          else if (historyOption === "30d") limit = 720;
+          else limit = 48; // default
+          break;
+        case "day":
+          if (historyOption === "7d") limit = 7;
+          else if (historyOption === "14d") limit = 14;
+          else if (historyOption === "90d") limit = 90;
+          else limit = 30; // default
+          break;
+        case "month":
+          if (historyOption === "6m") limit = 6;
+          else if (historyOption === "24m") limit = 24;
+          else limit = 12; // default
+          break;
+        case "year":
+          if (historyOption === "5y") limit = 5;
+          else limit = 10; // default
+          break;
+      }
     }
+
     return data.slice(Math.max(data.length - limit, 0));
-  }, [data, type]);
+  }, [data, type, historyOption]);
 
   const name = `chart_${type}_type` as keyof typeof settings;
   const isBar = settings[name] === "bar";
@@ -98,7 +183,21 @@ const Chart = ({ type, traffic }: Props) => {
 
   return (
     <Tabs defaultValue="traffic" className="w-full">
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="w-[180px]">
+          <Select value={historyOption} onValueChange={setHistoryOption}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select history limit" />
+            </SelectTrigger>
+            <SelectContent>
+              {getHistoryOptions().map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <TabsList>
           <TabsTrigger value="traffic">Traffic Data</TabsTrigger>
           <TabsTrigger value="rate">Mbit/s Rate</TabsTrigger>
