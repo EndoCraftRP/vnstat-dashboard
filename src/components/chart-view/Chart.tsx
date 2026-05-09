@@ -268,7 +268,17 @@ const Chart = ({ type, traffic }: Props) => {
                   y={percentile95}
                   stroke="#ef4444"
                   strokeDasharray="3 3"
-                  label={{ position: 'top', value: `95th Percentile (${percentile95.toFixed(2)} Mb/s)`, fill: '#ef4444', fontSize: 12 }}
+                  label={(props) => {
+                    const { viewBox } = props;
+                    return (
+                      <g>
+                        <rect x={viewBox.x + viewBox.width / 2 - 100} y={viewBox.y - 20} width={200} height={20} fill="white" opacity={0.8} rx={4} ry={4} />
+                        <text x={viewBox.x + viewBox.width / 2} y={viewBox.y - 5} fill="#ef4444" fontSize={12} textAnchor="middle">
+                          {`95th Percentile (${percentile95.toFixed(2)} Mb/s)`}
+                        </text>
+                      </g>
+                    );
+                  }}
                 />
               )}
             </LineChart>
