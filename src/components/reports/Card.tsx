@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
 import { IvnStat } from "services/vnstat.type";
-import styles from "./Cards.module.scss";
+import { Progress } from "components/ui/progress";
 
 const Card = ({ type, item, index, max }: Props) => {
   function theTitle(): string {
@@ -22,31 +22,40 @@ const Card = ({ type, item, index, max }: Props) => {
     }
   }
 
+  const rxPercent = max > 0 ? (item.rx / max) * 100 : 0;
+  const txPercent = max > 0 ? (item.tx / max) * 100 : 0;
+
   return (
-    <li style={{ "--order": index } as React.CSSProperties}>
-      <div className={styles.colName}>
+    <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr_100px_100px_100px_100px] gap-2 sm:gap-4 px-4 py-3 text-sm items-center hover:bg-muted/30 transition-colors">
+      <div className="font-medium flex items-center gap-2">
         {type === "top" ? (
-          <strong>{(index + 1).toString().padStart(2, "0")}</strong>
+          <span className="text-muted-foreground">{(index + 1).toString().padStart(2, "0")}</span>
         ) : null}
         {theTitle()}
       </div>
-      <div className={styles.colChart}>
-        <div>
-          <span
-            className="rx"
-            style={{ width: Math.round((item.rx / max) * 100) + "%" }}
-          ></span>
-          <span
-            className="tx"
-            style={{ width: Math.round((item.tx / max) * 100) + "%" }}
-          ></span>
-        </div>
+
+      <div className="hidden sm:flex flex-col gap-1 w-full max-w-[200px]">
+        <Progress value={rxPercent} className="h-1.5" indicatorClassName="bg-emerald-500" />
+        <Progress value={txPercent} className="h-1.5" indicatorClassName="bg-indigo-500" />
       </div>
-      <div className={styles.colRx}>{item.rx_formatted}</div>
-      <div className={styles.colTx}>{item.tx_formatted}</div>
-      <div className={styles.colTotal}>{item.total_formatted}</div>
-      <div className={styles.colRate}>{item.rate_formatted}</div>
-    </li>
+
+      <div className="flex justify-between sm:block text-right">
+        <span className="sm:hidden text-muted-foreground mr-2">RX:</span>
+        <span className="text-emerald-500">{item.rx_formatted}</span>
+      </div>
+      <div className="flex justify-between sm:block text-right">
+        <span className="sm:hidden text-muted-foreground mr-2">TX:</span>
+        <span className="text-indigo-500">{item.tx_formatted}</span>
+      </div>
+      <div className="flex justify-between sm:block text-right font-medium">
+        <span className="sm:hidden text-muted-foreground mr-2">Total:</span>
+        <span>{item.total_formatted}</span>
+      </div>
+      <div className="flex justify-between sm:block text-right text-muted-foreground">
+        <span className="sm:hidden mr-2">Rate:</span>
+        <span>{item.rate_formatted}</span>
+      </div>
+    </div>
   );
 };
 

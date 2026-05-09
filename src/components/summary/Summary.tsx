@@ -1,7 +1,6 @@
 import useReports from "hooks/useReports";
-import Widget, { IWidget } from "../widget/Widget";
+import Widget from "../widget/Widget";
 import Chart from "./Chart";
-import styles from "./Summary.module.scss";
 
 const Summary = () => {
   const { reports } = useReports();
@@ -22,19 +21,13 @@ const Summary = () => {
   const tH = Math.max(t.rx, t.tx);
 
   return (
-    <Widget className={styles.summary}>
-      <div className={styles.charts}>
-        <div className={styles.group + " is-day"}>
-          <Chart name="dayA" item={dA} higher={dH} />
-          <Chart name="dayB" item={dB} higher={dH} />
-        </div>
-        <div className={styles.group + " is-month"}>
-          <Chart name="monthA" item={mA} higher={mH} />
-          <Chart name="monthB" item={mB} higher={mH} />
-        </div>
-        <div className={styles.group + " is-total"}>
-          <Chart name="total" item={t} higher={tH} />
-        </div>
+    <Widget>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Chart name="dayA" item={dA} higher={dH} />
+        <Chart name="dayB" item={dB} higher={dH} />
+        <Chart name="monthA" item={mA} higher={mH} />
+        <Chart name="monthB" item={mB} higher={mH} />
+        <Chart name="total" item={t} higher={tH} />
       </div>
     </Widget>
   );

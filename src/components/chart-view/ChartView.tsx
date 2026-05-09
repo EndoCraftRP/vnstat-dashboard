@@ -6,7 +6,7 @@ import { ReportsContext, ReportsContextTab } from "../reports/ReportsContext";
 import Widget from "../widget/Widget";
 import Chart from "./Chart";
 import { IvnStat } from "services/vnstat.type";
-import styltes from "./ChartView.module.scss";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "components/ui/tabs";
 
 const ChartView = () => {
   const { __ } = useLanguages();
@@ -33,7 +33,6 @@ const ChartView = () => {
   });
 
   // Check available type to maintain it on renders
-
   const exists = menu.findIndex((el) => el.type === type);
   if (exists === -1) type = lastType.current ?? "fiveminute";
   else lastType.current = type;
@@ -51,24 +50,29 @@ const ChartView = () => {
 
 const ChartViewRender = React.memo(
   ({ menu, type, traffic, setTab }: RenderProps) => (
-    <Widget className={styltes.chartView}>
-      <div className={styltes.menu}>
-        {menu.map((item, index) => (
-          <button
-            key={index}
-            onClick={() => setTab(item.type)}
-            className={item.type === type ? "active" : undefined}
-          >
-            {item.title}
-          </button>
+    <Widget>
+      <Tabs value={type} onValueChange={(val: any) => setTab(val)}>
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
+          <h2 className="text-xl font-medium mb-4 sm:mb-0">Traffic Chart</h2>
+          <TabsList>
+            {menu.map((item) => (
+              <TabsTrigger key={item.type} value={item.type}>
+                {item.title}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
+        {menu.map((item) => (
+          <TabsContent key={item.type} value={item.type}>
+            <Chart type={item.type} traffic={traffic[item.type]} />
+          </TabsContent>
         ))}
-      </div>
-      <Chart type={type} traffic={traffic[type]} />
+      </Tabs>
     </Widget>
   ),
   (prev, next) => {
-    if (next.iface !== prev.iface) return false; // Interface has changed
-    if (next.type === prev.type) return true; // Report type is the same
+    if (next.iface !== prev.iface) return false;
+    if (next.type === prev.type) return true;
     return false;
   }
 );

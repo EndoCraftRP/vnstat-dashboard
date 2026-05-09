@@ -1,12 +1,16 @@
 import React from "react";
-import styles from "./Dashboard.module.scss";
+import Header from "./Header";
 
 const Dashboard = ({ children }: Props) => {
   return (
-    <>
-      <div className={styles.wallpaper + " wallpaper"}></div>
-      <div className={styles.dashboard}>{children}</div>
-    </>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <div className="w-full max-w-7xl mx-auto p-4 flex flex-col gap-6">
+        <Header />
+        <main className="flex flex-col gap-6">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 };
 

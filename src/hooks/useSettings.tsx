@@ -1,5 +1,5 @@
 import React from "react";
-import { ITheme } from "./useThemes";
+
 import useLocalStorage from "./useLocalStorage";
 
 const SettingsContext = React.createContext<Context>(undefined!);
@@ -77,7 +77,7 @@ export namespace ISettings {
   export interface Options {
     units: "IEC" | "JEDEC" | "SI";
     interface: string;
-    theme?: ITheme;
+    theme?: "dark" | "light";
     reports_initial: "fiveminute" | "hour" | "day" | "month" | "year";
     chart_initial: "fiveminute" | "hour" | "day" | "month" | "year";
     chart_fiveminute_log: boolean;

@@ -1,16 +1,11 @@
 import React from "react";
 import { DateTime } from "luxon";
-import * as d3 from "d3";
 import useLanguages from "hooks/useLanguages";
 import { IvnStat } from "services/vnstat.type";
+import { Progress } from "components/ui/progress";
 
 const Chart = ({ name, item, higher }: Props) => {
   const { __ } = useLanguages();
-  const ref = React.useRef<any>();
-  const rx = item.rx;
-  const tx = item.tx;
-
-  // Title
 
   let title: string | null = "-";
 
@@ -32,78 +27,32 @@ const Chart = ({ name, item, higher }: Props) => {
       title = "–";
   }
 
-  // SVG
-
-  React.useEffect(() => {
-    const bar = {
-      width: 30,
-      height: 1,
-      margin: 3,
-      total: 10,
-      delay: 100,
-      color: "var(--chart-background)",
-      rx: "var(--rx)",
-      tx: "var(--tx)",
-    };
-
-    const svg = d3.select(ref.current);
-    svg.selectAll("*").remove();
-    svg.attr("width", "100%");
-
-    const avg = Math.ceil(higher / bar.total);
-    const width = bar.width + bar.margin + bar.width;
-    const height = Math.ceil((bar.height + bar.margin) * bar.total);
-
-    svg
-      .attr("width", width)
-      .attr("height", height)
-      .attr("viewBox", [0, 0, width, height]);
-
-    let y = 0;
-    let line = 0;
-    const gRX = svg.append("g").attr("class", "rx");
-    const gTX = svg.append("g").attr("class", "tx");
-
-    for (let i = 0; i < bar.total; i++) {
-      line += avg;
-
-      gRX
-        .append("rect")
-        .attr("x", 0)
-        .attr("y", y)
-        .attr("width", bar.width)
-        .attr("height", bar.height)
-        .attr("fill", bar.color)
-        .transition()
-        .ease(d3.easeLinear)
-        .duration(0)
-        .delay(bar.delay * i)
-        .attr("fill", (i === 0 && rx > 0) || line < rx ? bar.rx : bar.color);
-
-      gTX
-        .append("rect")
-        .attr("x", bar.width + bar.margin)
-        .attr("y", y)
-        .attr("width", bar.width)
-        .attr("height", bar.height)
-        .attr("fill", bar.color)
-        .transition()
-        .ease(d3.easeLinear)
-        .duration(0)
-        .delay(bar.delay * i)
-        .attr("fill", (i === 0 && tx > 0) || line < tx ? bar.tx : bar.color);
-
-      y += bar.height + bar.margin;
-    }
-  });
+  const rxPercent = higher > 0 ? (item.rx / higher) * 100 : 0;
+  const txPercent = higher > 0 ? (item.tx / higher) * 100 : 0;
 
   return (
-    <div>
-      <svg ref={ref} width="100%"></svg>
-      <p>{title}</p>
-      <p className="rx">{item.rx_formatted}</p>
-      <p className="tx">{item.tx_formatted}</p>
-      <p>{item.total_formatted}</p>
+    <div className="flex flex-col gap-2 p-4 bg-muted/30 rounded-lg">
+      <h3 className="text-sm font-medium capitalize text-muted-foreground">{title}</h3>
+      <div className="flex flex-col gap-3 mt-2">
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between text-xs">
+            <span>RX</span>
+            <span>{item.rx_formatted}</span>
+          </div>
+          <Progress value={rxPercent} className="h-2 bg-muted" indicatorClassName="bg-emerald-500" />
+        </div>
+        <div className="flex flex-col gap-1">
+          <div className="flex justify-between text-xs">
+            <span>TX</span>
+            <span>{item.tx_formatted}</span>
+          </div>
+          <Progress value={txPercent} className="h-2 bg-muted" indicatorClassName="bg-indigo-500" />
+        </div>
+        <div className="flex justify-between text-sm font-semibold mt-1">
+          <span>Total</span>
+          <span>{item.total_formatted}</span>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,15 +1,18 @@
 import React from "react";
-import styles from "./Widget.module.scss";
+import { Card } from "components/ui/card";
+import { cn } from "lib/utils";
 
-const Widget = ({ className, children }: IWidget.Props) => {
-  return <div className={styles.widget + " " + className}>{children}</div>;
+const Widget = ({ children, className }: IWidget) => {
+  return (
+    <Card className={cn("p-6", className)}>
+      {children}
+    </Card>
+  );
 };
 
 export default Widget;
 
-export namespace IWidget {
-  export interface Props {
-    className: string;
-    children: React.ReactNode;
-  }
+export interface IWidget {
+  children: React.ReactNode;
+  className?: string;
 }
