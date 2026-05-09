@@ -1,6 +1,7 @@
 import useReports from "hooks/useReports";
 import Widget from "../widget/Widget";
 import Chart from "./Chart";
+import PercentileKPI from "./PercentileKPI";
 
 const Summary = () => {
   const { reports } = useReports();
@@ -22,12 +23,13 @@ const Summary = () => {
 
   return (
     <Widget>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Chart name="dayA" item={dA} higher={dH} />
         <Chart name="dayB" item={dB} higher={dH} />
         <Chart name="monthA" item={mA} higher={mH} />
         <Chart name="monthB" item={mB} higher={mH} />
         <Chart name="total" item={t} higher={tH} />
+        <PercentileKPI />
       </div>
     </Widget>
   );

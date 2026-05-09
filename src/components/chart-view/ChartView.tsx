@@ -49,7 +49,9 @@ const ChartView = () => {
 };
 
 const ChartViewRender = React.memo(
-  ({ menu, type, traffic, setTab }: RenderProps) => (
+  ({ menu, type, traffic, setTab }: RenderProps) => {
+    const [chartMode, setChartMode] = React.useState<string>("traffic");
+    return (
     <Widget>
       <Tabs value={type} onValueChange={(val: any) => setTab(val)}>
         <div className="flex flex-col sm:flex-row items-center justify-between mb-4">
@@ -64,12 +66,12 @@ const ChartViewRender = React.memo(
         </div>
         {menu.map((item) => (
           <TabsContent key={item.type} value={item.type}>
-            <Chart type={item.type} traffic={traffic[item.type]} />
+            <Chart type={item.type} traffic={traffic[item.type]} chartMode={chartMode} setChartMode={setChartMode} />
           </TabsContent>
         ))}
       </Tabs>
     </Widget>
-  ),
+  )},
   (prev, next) => {
     if (next.iface !== prev.iface) return false;
     if (next.type === prev.type) return true;
