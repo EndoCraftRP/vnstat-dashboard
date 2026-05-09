@@ -14,17 +14,21 @@ import {
   Tooltip,
   Legend,
   Line,
-  LineChart
+  LineChart,
+  ReferenceLine
 } from "recharts";
 import useSettings from "hooks/useSettings";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "components/ui/select";
+import { Switch } from "components/ui/switch";
+import { Label } from "components/ui/label";
 
 
 const Chart = ({ type, traffic }: Props) => {
   const { settings } = useSettings();
   const { formatTraffic } = useHelpers();
   const [historyOption, setHistoryOption] = React.useState<string>("default");
+  const [show95thPercentile, setShow95thPercentile] = React.useState<boolean>(false);
 
   React.useEffect(() => {
     setHistoryOption("default");
@@ -162,6 +166,13 @@ const Chart = ({ type, traffic }: Props) => {
     return data.slice(Math.max(data.length - limit, 0));
   }, [data, type, historyOption]);
 
+    const percentile95 = React.useMemo(() => {
+    if (!chartData || chartData.length === 0) return 0;
+    const rates = chartData.map(d => d.rateMbit).sort((a, b) => a - b);
+    const index = Math.floor(0.95 * rates.length);
+    return rates[index];
+  }, [chartData]);
+
   const name = `chart_${type}_type` as keyof typeof settings;
   const isBar = settings[name] === "bar";
 
@@ -233,6 +244,16 @@ const Chart = ({ type, traffic }: Props) => {
       </TabsContent>
 
       <TabsContent value="rate">
+        <div className="flex items-center justify-end space-x-2 mb-2">
+          <Switch
+            id="percentile-toggle"
+            checked={show95thPercentile}
+            onCheckedChange={setShow95thPercentile}
+          />
+          <Label htmlFor="percentile-toggle" className="text-sm text-muted-foreground cursor-pointer">
+            Show 95th Percentile
+          </Label>
+        </div>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -242,6 +263,14 @@ const Chart = ({ type, traffic }: Props) => {
               <Tooltip content={<CustomTooltip />} />
               <Legend />
               <Line type="monotone" dataKey="rateMbit" name="Rate" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              {show95thPercentile && (
+                <ReferenceLine
+                  y={percentile95}
+                  stroke="#ef4444"
+                  strokeDasharray="3 3"
+                  label={{ position: 'top', value: `95th Percentile (${percentile95.toFixed(2)} Mb/s)`, fill: '#ef4444', fontSize: 12 }}
+                />
+              )}
             </LineChart>
           </ResponsiveContainer>
         </div>
